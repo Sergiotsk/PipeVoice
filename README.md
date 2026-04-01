@@ -1,6 +1,6 @@
 # PipeVoice
 
-> Push-to-talk voice transcription CLI tool. Hold spacebar to record, release to transcribe. Pipe the output to any AI agent.
+> Push-to-talk voice transcription CLI tool. Hold F9 to record, release to transcribe. Pipe the output to any AI agent or auto-type into any window.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
@@ -8,12 +8,12 @@
 
 ## Features
 
-- **Push-to-talk**: Hold spacebar to record, release to transcribe
+- **Push-to-talk**: Hold F9 to record, release to transcribe
 - **100% free**: Uses local Whisper models — no API keys, no costs, no limits
 - **Privacy-first**: Audio never leaves your machine
 - **Pipe-friendly**: Output to stdout, pipe to any CLI tool or AI agent
 - **Cross-platform**: Works on Windows, Linux, and macOS
-- **Configurable**: Choose model size, language, and microphone
+- **Configurable**: Choose model size, language, microphone, and trigger mode
 
 ## Quick Start
 
@@ -40,11 +40,14 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```bash
-# Start PipeVoice (default: spacebar, auto-detect language, small model)
+# Start PipeVoice (default: F9, auto-detect language, small model)
 python -m src
 
-# Hold SPACE to speak, release to transcribe
+# Hold F9 to speak, release to transcribe
 # Transcribed text goes to stdout
+
+# Auto-type mode — types text into the active window
+python -m src --type
 ```
 
 ### Piping to AI Agents
@@ -72,6 +75,7 @@ Options:
   --language LANG                         Language code (es, en, fr, etc.) or auto-detect
   --device N                              Microphone device index
   --list-devices                          Show available microphones and exit
+  --type                                  Simulate keyboard and auto-type transcribed text
   --no-vad                                Disable voice activity detection (transcribes everything)
   --vad-threshold THRESHOLD               RMS silence threshold (default: 0.01)
                                           Lower = more sensitive, Higher = louder speech required
@@ -101,6 +105,9 @@ python -m src --vad-threshold 0.005
 
 # Disable VAD — transcribe everything regardless of silence
 python -m src --no-vad
+
+# Auto-type mode — types text into whatever window is active
+python -m src --type
 
 # Save transcriptions to file
 python -m src | tee transcriptions.txt
@@ -247,6 +254,24 @@ VAD state is shown at startup:
 | Silence triggers transcription | Raise `--vad-threshold` |
 | GPU not detected | Ensure CUDA-compatible PyTorch is installed |
 
+## Changelog
+
+### Unreleased
+
+#### Changed
+- **Trigger key**: Changed from `spacebar` to `F9` to avoid conflicts with normal typing
+- **Default language**: Changed from Spanish (`es`) to auto-detect — Whisper now detects language automatically
+- **Signal handler**: Fixed double-shutdown issue on Ctrl+C — handler now guards against repeated calls
+
+#### Added
+- **`--type` flag**: Virtual keyboard mode that auto-types transcribed text into the active window. Useful for dictating into any application without piping.
+- **Animated status indicators**: Braille spinner (`⠋⠙⠹⠸...`) during recording and progress bar (`[=   ]`) during transcription, shown on stderr. In `--type` mode, indicators are also typed into the active window.
+- **`torch>=2.0.0` dependency**: Explicit PyTorch requirement for GPU acceleration support
+
+#### Improved
+- Transcription now runs in a background daemon thread, keeping the keyboard listener fully responsive
+- Better thread synchronization between recording, transcription, and animation threads
+
 ## License
 
 MIT License — see LICENSE file.
@@ -254,4 +279,3 @@ MIT License — see LICENSE file.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-# PipeVoice

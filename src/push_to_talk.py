@@ -1,6 +1,6 @@
 """Push-to-talk keyboard listener.
 
-Detects when the user holds/releases the configured key (spacebar by default)
+Detects when the user holds/releases the configured key (F9 by default)
 to trigger audio recording. Thread-safe state management with debounce.
 """
 
@@ -16,7 +16,7 @@ class PushToTalk:
     allowing the user to hold a key to record and release to stop.
 
     Attributes:
-        trigger_key: The key that triggers recording (default: space).
+        trigger_key: The key that triggers recording (default: F9).
         _is_holding: Thread-safe flag for current key state.
         _last_release: Timestamp of last key release (debounce).
         _debounce_seconds: Minimum time between triggers.
@@ -36,13 +36,13 @@ class PushToTalk:
 
         Args:
             trigger_key: The key to use for push-to-talk.
-                         Default is keyboard.Key.space (spacebar).
+                         Default is keyboard.Key.f9 (F9).
             on_press: Callback function(key) called when key is pressed.
             on_release: Callback function(key) called when key is released.
             debounce_seconds: Minimum seconds between consecutive triggers
                             to prevent accidental double-fires.
         """
-        self.trigger_key = trigger_key or keyboard.Key.space
+        self.trigger_key = trigger_key or keyboard.Key.f9
         self._is_holding = False
         self._last_release = 0
         self._debounce_seconds = debounce_seconds
