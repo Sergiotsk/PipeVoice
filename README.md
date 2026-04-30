@@ -21,7 +21,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pipevoice.git
+git clone https://github.com/Sergiotsk/PipeVoice.git
 cd pipevoice
 
 # Create a virtual environment
