@@ -132,8 +132,8 @@ python -m src | tee -a history.txt | opencode
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────┐
-│  pynput     │────▶│ sounddevice  │────▶│   Whisper    │────▶│ stdout  │
-│ (spacebar)  │     │  (recorder)  │     │ (transcriber)│     │ (text)  │
+│  pynput    │────▶│ sounddevice  │────▶│   Whisper    │────▶│ stdout  │
+│    (F9)     │     │  (recorder)  │     │ (transcriber)│     │ (text)  │
 └─────────────┘     └──────────────┘     └──────────────┘     └────┬────┘
                                                                    │
                                                             ┌──────▼──────┐
