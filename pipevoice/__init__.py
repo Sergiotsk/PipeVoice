@@ -9,8 +9,8 @@ Usage:
     python -m src --list-devices
 """
 
-from src.push_to_talk import PushToTalk
-from src.recorder import AudioRecorder
-from src.transcriber import Transcriber
+from pipevoice.push_to_talk import PushToTalk
+from pipevoice.recorder import AudioRecorder
+from pipevoice.transcriber import Transcriber
 
 __version__ = "1.0.0"

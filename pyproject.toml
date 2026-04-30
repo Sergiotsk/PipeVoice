@@ -1,0 +1,22 @@
+[project]
+name = "pipevoice"
+version = "1.0.0"
+description = "Push-to-talk voice transcription CLI — hold F9, pipe to anything"
+requires-python = ">=3.10"
+dependencies = [
+    "openai-whisper==20231117",
+    "torch>=2.0.0",
+    "sounddevice==0.4.6",
+    "pynput==1.7.6",
+    "numpy==1.26.4",
+]
+
+[project.scripts]
+pipevoice = "pipevoice.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+no-build-isolation-package = ["openai-whisper"]

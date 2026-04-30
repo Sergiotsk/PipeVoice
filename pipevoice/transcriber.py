@@ -107,7 +107,12 @@ class Transcriber:
         if len(audio) == 0:
             return ""
 
-        options = {}
+        options = {
+            "beam_size": 1,
+            "best_of": 1,
+            "temperature": 0,
+            "condition_on_previous_text": False,
+        }
         if language:
             options["language"] = language
 

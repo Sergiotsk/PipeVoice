@@ -18,9 +18,10 @@ import time
 
 import numpy as np
 
-from src.push_to_talk import PushToTalk
-from src.recorder import AudioRecorder
-from src.transcriber import Transcriber
+from pipevoice.push_to_talk import PushToTalk
+from pipevoice.recorder import AudioRecorder
+from pipevoice.transcriber import Transcriber
+from pipevoice.audio_processor import preprocess_audio
 
 
 def parse_args():
@@ -38,17 +39,17 @@ def parse_args():
         ),
         epilog=(
             "Examples:\n"
-            "  python -m src                          # Default (F9, auto-detect)\n"
-            "  python -m src --type                   # Auto-type transcribed text\n"
-            "  python -m src --language en            # English transcription\n"
-            "  python -m src --model base             # Faster, less accurate model\n"
-            "  python -m src --list-devices           # Show available microphones\n"
-            "  python -m src --device 1               # Use specific microphone\n"
+            "  python -m pipevoice                          # Default (F9, auto-detect)\n"
+            "  python -m pipevoice --type                   # Auto-type transcribed text\n"
+            "  python -m pipevoice --language en            # English transcription\n"
+            "  python -m pipevoice --model base             # Faster, less accurate model\n"
+            "  python -m pipevoice --list-devices           # Show available microphones\n"
+            "  python -m pipevoice --device 1               # Use specific microphone\n"
             "\n"
             "Pipe examples:\n"
-            "  python -m src | opencode               # Send to opencode agent\n"
-            "  python -m src | claude                 # Send to Claude CLI\n"
-            "  python -m src | tee transcript.txt     # Save and display\n"
+            "  python -m pipevoice | opencode               # Send to opencode agent\n"
+            "  python -m pipevoice | claude                 # Send to Claude CLI\n"
+            "  python -m pipevoice | tee transcript.txt     # Save and display\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -204,7 +205,7 @@ def main():
             ui_cleanup_in_progress = False
 
     def transcribing_animation():
-        chars = ['[=   ]', '[ =  ]', '[  = ]', '[   =]', '[  = ]', '[ =  ]']
+        chars = ['[|]', '[/]', '[--]', '[\]', '[|]', '[#]']
         i = 0
         base_msg = "Procesando "
         if args.type:
@@ -260,10 +261,10 @@ def main():
         # Stop stream first so no more chunks are added, then read the buffer.
         recorder.stop()
         audio = recorder.get_audio()
+        audio = preprocess_audio(audio, trim=True, normalize=True, soft_limit=True)
         duration = recorder.get_duration()
 
-        time.sleep(0.15) # give animation thread a tiny bit of time to clear the line
-        print(f"[pipevoice] Recorded {duration:.1f}s of audio.", file=sys.stderr)
+        print(f"[pipevoice] Recorded {duration:.1f}s of audio. ({len(audio)/16000:.1f}s after processing)", file=sys.stderr)
 
         if duration < 0.3:
             print("[pipevoice] Too short, ignoring.", file=sys.stderr)
@@ -293,7 +294,6 @@ def main():
             text = transcriber.transcribe(audio, language=args.language)
             
             transcribing_indicator_active = False
-            time.sleep(0.2)  # Allow animation thread to clean up the line
             
             if text:
                 # Output ONLY to stdout - this is what gets piped
