@@ -37,11 +37,9 @@ Thumbs.db
 # Logs
 *.log
 
-# Metodología de trabajo personal (SDD + backlog interno) — no es documentación
-# pública del proyecto, queda solo en local. Ver docs/10-aprendizaje/ para lo
-# que sí se comparte.
+# Metodología de trabajo interna (SDD + backlog + ADRs) — privada, no es
+# documentación pública del proyecto. Patrón de referencia: IA-Brain
+# _templates/python-project/.gitignore.
 openspec/
 .atl/
-docs/02-arquitectura/
-docs/06-operaciones/
-docs/10-aprendizaje/
+docs/

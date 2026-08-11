@@ -171,6 +171,7 @@ def main():
     is_transcribing = False
     ui_cleanup_in_progress = False
     anim_thread = None
+    consecutive_silence_count = 0
 
     def recording_animation():
         chars = ['●○○○', '○●○○', '○○●○', '○○○●', '○○●○', '○●○○']
@@ -259,6 +260,7 @@ def main():
     def on_key_release(key):
         """Stop recording and transcribe when trigger key is released."""
         nonlocal recording_indicator_active, is_actively_recording, anim_thread
+        nonlocal consecutive_silence_count
         
         if not is_actively_recording:
             return
@@ -292,7 +294,17 @@ def main():
                     f"[pipevoice] Silence detected (RMS {rms:.4f} < {args.vad_threshold}), ignoring.",
                     file=sys.stderr,
                 )
+                consecutive_silence_count += 1
+                if consecutive_silence_count == 3:
+                    print(
+                        "[pipevoice] 3 grabaciones seguidas sin voz detectada. "
+                        "¿Es el micrófono correcto? Probá 'pipevoice --list-devices' "
+                        "y --device <N>, o --no-vad si querés forzar la transcripción.",
+                        file=sys.stderr,
+                    )
                 return
+
+        consecutive_silence_count = 0
 
         # Run transcription in a daemon thread so the keyboard listener
         # is never blocked and the spacebar stays responsive.
