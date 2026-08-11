@@ -40,6 +40,17 @@ uv run pipevoice      # run from source
 uv run pytest         # run the test suite
 ```
 
+> **Important**: `uv run pipevoice` and the globally installed `pipevoice`
+> command (`uv tool install`) are **two separate environments**. Editing
+> the source and testing with `uv run` does **not** update the globally
+> installed CLI — you have to explicitly reinstall it:
+> ```bash
+> uv tool install --reinstall --force .
+> ```
+> Skipping this step means the `pipevoice` you actually run day-to-day
+> keeps behaving like the last version you reinstalled, silently ignoring
+> any local changes — however correct they test in `.venv`.
+
 ### Basic Usage
 
 ```bash

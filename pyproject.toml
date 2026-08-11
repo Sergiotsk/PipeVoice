@@ -29,6 +29,13 @@ build-backend = "hatchling.build"
 [tool.uv]
 no-build-isolation-package = ["openai-whisper"]
 
+[tool.uv.extra-build-dependencies]
+# openai-whisper's setup.py hace `import pkg_resources` pero no lo declara
+# como build dependency. Sin esto, `uv tool install` (y cualquier build sin
+# aislamiento) falla con ModuleNotFoundError. Bug real encontrado 2026-08-11
+# instalando PipeVoice desde cero con `uv tool install --reinstall`.
+openai-whisper = ["setuptools", "pkg_resources"]
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"

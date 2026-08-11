@@ -273,8 +273,8 @@ def main():
             
         # Stop stream first so no more chunks are added, then read the buffer.
         recorder.stop()
-        audio = recorder.get_audio()
-        audio = preprocess_audio(audio, trim=True, normalize=True, soft_limit=True)
+        raw_audio = recorder.get_audio()
+        audio = preprocess_audio(raw_audio, trim=True, normalize=True, soft_limit=True)
         duration = recorder.get_duration()
 
         print(f"[pipevoice] Recorded {duration:.1f}s of audio. ({len(audio)/16000:.1f}s after processing)", file=sys.stderr)

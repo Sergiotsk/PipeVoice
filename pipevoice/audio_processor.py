@@ -8,34 +8,62 @@ and accuracy.
 import numpy as np
 
 
-def normalize_peak(audio: np.ndarray, target_db: float = -3.0) -> np.ndarray:
+def normalize_peak(
+    audio: np.ndarray, target_db: float = -3.0, reference_percentile: float = 99.0
+) -> np.ndarray:
     """Normalize audio to a target peak level in decibels.
 
-    Scales the audio so that its maximum amplitude corresponds to
+    Scales the audio so that a robust "peak" reference corresponds to
     the target dB level. This ensures consistent volume levels
     regardless of microphone input gain.
+
+    Uses a percentile (default: 99th) instead of the absolute maximum
+    as the reference sample. A single transient spike — a driver pop,
+    a click when the stream starts/stops, electrical noise — can be
+    10-100x louder than real speech on a quiet microphone. If that one
+    sample were used as the peak, it would dominate the gain
+    calculation and leave the actual voice under-amplified, which in
+    turn made push-to-talk's silence detection (VAD) discard real
+    speech as silence. Bug found in production 2026-08-11 — see
+    docs/06-operaciones/BACKLOG.md (local) for the real-world repro.
 
     Args:
         audio: Input audio as float32 numpy array with values in [-1, 1].
         target_db: Target peak level in decibels. Default is -3.0 dB
                   (leaves some headroom). Must be <= 0.
+        reference_percentile: Percentile of |audio| used as the "peak"
+                  reference instead of the true max. Default 99.0 —
+                  ignores the loudest 1% of samples, which absorbs
+                  isolated spikes without needing to detect them
+                  explicitly. Use 100.0 to restore the old
+                  absolute-max behavior.
 
     Returns:
-        Normalized audio array with same dtype and shape.
+        Normalized audio array with same dtype and shape. Note: unlike
+        the absolute-max version, a genuine transient spike can end up
+        louder than the target after scaling — it gets hard-clipped to
+        [-1, 1], which is an acceptable trade-off for one noise sample
+        versus losing the entire recording's real content.
 
     Example:
-        >>> audio = np.array([0.1, 0.5, 0.3, 0.8, 0.2])
+        >>> audio = np.array([0.01, 0.05, 0.03, 0.08, 0.02])  # quiet
         >>> normalized = normalize_peak(audio, target_db=-3.0)
         >>> print(f"Peak: {np.max(np.abs(normalized)):.3f}")  # ~0.707
+
+        Only amplifies — audio already louder than the target is left
+        untouched (gain_db would be negative, never applied):
+        >>> loud = np.array([0.1, 0.5, 0.3, 0.8, 0.2])  # peak 0.8 > target
+        >>> normalize_peak(loud, target_db=-3.0)[3]  # unchanged
+        0.8
     """
     if len(audio) == 0:
         return audio
 
-    current_peak = np.max(np.abs(audio))
-    if current_peak == 0:
+    reference_peak = np.percentile(np.abs(audio), reference_percentile)
+    if reference_peak == 0:
         return audio
 
-    current_db = 20 * np.log10(current_peak)
+    current_db = 20 * np.log10(reference_peak)
     gain_db = target_db - current_db
 
     if gain_db > 0:

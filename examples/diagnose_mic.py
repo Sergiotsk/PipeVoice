@@ -17,6 +17,8 @@ from typing import cast
 import numpy as np
 import sounddevice as sd
 
+from pipevoice.audio_processor import preprocess_audio
+
 device = int(sys.argv[1]) if len(sys.argv) > 1 else None
 seconds = float(sys.argv[2]) if len(sys.argv) > 2 else 5.0
 
@@ -41,14 +43,20 @@ recording = sd.rec(
 )
 sd.wait()
 
-peak = float(np.max(np.abs(recording)))
-rms = float(np.sqrt(np.mean(recording ** 2)))
-nonzero = int(np.count_nonzero(recording))
+audio = recording.flatten()
+
+peak = float(np.max(np.abs(audio)))
+rms = float(np.sqrt(np.mean(audio ** 2)))
+nonzero = int(np.count_nonzero(audio))
 
 print()
+print("--- Audio crudo (sin procesar) ---")
 print(f"Peak (máximo absoluto): {peak:.6f}")
 print(f"RMS (energía promedio): {rms:.6f}")
-print(f"Samples distintos de cero: {nonzero} / {len(recording)}")
+print(f"Samples distintos de cero: {nonzero} / {len(audio)}")
+print(f"Percentil 90: {np.percentile(np.abs(audio), 90):.6f}")
+print(f"Percentil 99: {np.percentile(np.abs(audio), 99):.6f}")
+print(f"Percentil 99.9: {np.percentile(np.abs(audio), 99.9):.6f}")
 
 if nonzero == 0:
     print("\n>>> El buffer está TOTALMENTE en cero. El micrófono no está")
@@ -57,6 +65,20 @@ if nonzero == 0:
 elif peak < 0.001:
     print("\n>>> Hay señal pero es casi nada — el mic está muteado, el gain")
     print(">>> muy bajo, o es el dispositivo equivocado.")
+    sys.exit(0)
+
+# --- Mismo pipeline que usa main.py de verdad, con los mismos números ---
+processed = preprocess_audio(audio, trim=True, normalize=True, soft_limit=True)
+if len(processed) == 0:
+    print("\n--- Pipeline real de PipeVoice ---")
+    print(">>> preprocess_audio() devolvió audio VACÍO (todo se recortó como silencio).")
 else:
-    print("\n>>> Hay señal real. Si PipeVoice igual la ignora, el problema")
-    print(">>> está en preprocess_audio() o en el cálculo de VAD, no en la captura.")
+    k = max(1, len(processed) // 10)
+    top_energy = np.partition(processed ** 2, -k)[-k:]
+    vad_rms = float(np.sqrt(np.mean(top_energy)))
+    print("\n--- Pipeline real de PipeVoice (preprocess_audio + VAD) ---")
+    print(f"Peak tras preprocess: {np.max(np.abs(processed)):.6f}")
+    print(f"Samples tras trim_silence: {len(processed)} / {len(audio)}")
+    print(f"RMS que usa el VAD (top 10% más fuerte): {vad_rms:.6f}  (umbral default: 0.01)")
+    if vad_rms < 0.01:
+        print(">>> Esto es exactamente lo que descarta PipeVoice como 'silencio'.")
