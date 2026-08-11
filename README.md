@@ -41,26 +41,26 @@ pip install -r requirements.txt
 
 ```bash
 # Start PipeVoice (default: F9, auto-detect language, small model)
-python -m src
+pipevoice
 
 # Hold F9 to speak, release to transcribe
 # Transcribed text goes to stdout
 
 # Auto-type mode — types text into the active window
-python -m src --type
+pipevoice --type
 ```
 
 ### Piping to AI Agents
 
 ```bash
 # Pipe to opencode
-python -m src | opencode
+pipevoice | opencode
 
 # Pipe to Claude CLI
-python -m src --language en | claude
+pipevoice --language en | claude
 
 # Pipe to any tool that reads stdin
-python -m src | your-tool-here
+pipevoice | your-tool-here
 ```
 
 ## Usage
@@ -68,7 +68,7 @@ python -m src | your-tool-here
 ### Command Line Options
 
 ```
-python -m src [OPTIONS]
+pipevoice [OPTIONS]
 
 Options:
   --model {tiny,base,small,medium,large}  Whisper model size (default: small)
@@ -86,34 +86,34 @@ Options:
 
 ```bash
 # List available microphones (marks the real system default)
-python -m src --list-devices
+pipevoice --list-devices
 
 # Use specific microphone (index 1)
-python -m src --device 1
+pipevoice --device 1
 
 # English transcription with faster model
-python -m src --model base --language en
+pipevoice --model base --language en
 
 # Spanish transcription with higher accuracy model
-python -m src --model medium --language es
+pipevoice --model medium --language es
 
 # Noisy environment — raise VAD threshold to ignore background noise
-python -m src --vad-threshold 0.03
+pipevoice --vad-threshold 0.03
 
 # Quiet voice or distant microphone — lower VAD threshold
-python -m src --vad-threshold 0.005
+pipevoice --vad-threshold 0.005
 
 # Disable VAD — transcribe everything regardless of silence
-python -m src --no-vad
+pipevoice --no-vad
 
 # Auto-type mode — types text into whatever window is active
-python -m src --type
+pipevoice --type
 
 # Save transcriptions to file
-python -m src | tee transcriptions.txt
+pipevoice | tee transcriptions.txt
 
 # Save AND send to agent
-python -m src | tee -a history.txt | opencode
+pipevoice | tee -a history.txt | opencode
 ```
 
 ### Model Selection Guide
@@ -132,7 +132,7 @@ python -m src | tee -a history.txt | opencode
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────┐
-│  pynput    │────▶│ sounddevice  │────▶│   Whisper    │────▶│ stdout  │
+│  pynput     │────▶│ sounddevice  │────▶│   Whisper    │────▶│ stdout  │
 │    (F9)     │     │  (recorder)  │     │ (transcriber)│     │ (text)  │
 └─────────────┘     └──────────────┘     └──────────────┘     └────┬────┘
                                                                    │
@@ -147,11 +147,12 @@ python -m src | tee -a history.txt | opencode
 
 ```
 PipeVoice/
-├── src/
+├── pipevoice/                # Package
 │   ├── __init__.py           # Package init
 │   ├── main.py               # CLI entry point
 │   ├── recorder.py           # Microphone recording (sounddevice)
 │   ├── transcriber.py        # Speech-to-text (Whisper)
+│   ├── audio_processor.py    # Audio preprocessing
 │   └── push_to_talk.py       # Keyboard listener (pynput)
 ├── docs/
 │   ├── 01-audio-capture.md   # Audio digital concepts & sounddevice
@@ -220,20 +221,20 @@ VAD filters out recordings where no real speech was detected, preventing Whisper
 
 ```bash
 # Default threshold (works well in quiet environments)
-python -m src
+pipevoice
 
 # Show RMS value when audio is discarded — useful for calibrating
-python -m src --vad-threshold 0.01
+pipevoice --vad-threshold 0.01
 # stderr: [pipevoice] Silence detected (RMS 0.0032 < 0.01), ignoring.
 
 # Noisy room / fan noise / air conditioning
-python -m src --vad-threshold 0.03
+pipevoice --vad-threshold 0.03
 
 # Soft voice, headset, or far microphone
-python -m src --vad-threshold 0.005
+pipevoice --vad-threshold 0.005
 
 # Disable VAD entirely
-python -m src --no-vad
+pipevoice --no-vad
 ```
 
 VAD state is shown at startup:
@@ -265,12 +266,14 @@ VAD state is shown at startup:
 
 #### Added
 - **`--type` flag**: Virtual keyboard mode that auto-types transcribed text into the active window. Useful for dictating into any application without piping.
-- **Animated status indicators**: Braille spinner (`⠋⠙⠹⠸...`) during recording and progress bar (`[=   ]`) during transcription, shown on stderr. In `--type` mode, indicators are also typed into the active window.
+- **Animated status indicators**: UI with fluid spinners (`🎤 GRABANDO ●○○○` and `📝 PROCESANDO ◓...`) shown on stderr. In `--type` mode, these indicators are dynamically typed and erased in the active window.
+- **Anti-Hallucination Filter**: Whisper occasionally hallucinates text during silence or noise (e.g., repeating characters like "වවවවව" or outputting "Subtitles by Amara"). PipeVoice now automatically detects and ignores these hallucinations.
 - **`torch>=2.0.0` dependency**: Explicit PyTorch requirement for GPU acceleration support
 
 #### Improved
-- Transcription now runs in a background daemon thread, keeping the keyboard listener fully responsive
-- Better thread synchronization between recording, transcription, and animation threads
+- Transcription now runs in a background daemon thread, keeping the keyboard listener fully responsive.
+- Better thread synchronization between recording, transcription, and UI animation threads.
+- Refactored project structure to a proper python package (`pipevoice`).
 
 ## License
 
@@ -279,3 +282,4 @@ MIT License — see LICENSE file.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+

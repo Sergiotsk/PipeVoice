@@ -170,94 +170,105 @@ def main():
     is_actively_recording = False
     is_transcribing = False
     ui_cleanup_in_progress = False
+    anim_thread = None
 
     def recording_animation():
-        chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        chars = ['●○○○', '○●○○', '○○●○', '○○○●', '○○●○', '○●○○']
+        console_msg = "🎤 GRABANDO"
         i = 0
-        base_msg = "Escuchando... "
+        
         if args.type:
-            from pynput.keyboard import Controller, Key
-            kbd = Controller()
-            time.sleep(0.05) # ensure key release logic doesn't clash
-            kbd.type(base_msg)
-            kbd.type(chars[i])
+            try:
+                import keyboard
+                keyboard.write(f"{chars[i]}")
+            except Exception:
+                pass
 
         while recording_indicator_active:
-            print(f"\r[pipevoice] {chars[i]} Escuchando... (suelta F9 para transcribir)  ", end="", file=sys.stderr, flush=True)
-            
-            if args.type:
-                kbd.press(Key.backspace)
-                kbd.release(Key.backspace)
-                next_char = chars[(i + 1) % len(chars)]
-                kbd.type(next_char)
-                
-            i = (i + 1) % len(chars)
-            time.sleep(0.1)
-            
+            print(f"\r[pipevoice] {console_msg} {chars[i % len(chars)]} (soltá F9)  ", end="", file=sys.stderr, flush=True)
+            time.sleep(0.15)
+            i += 1
+            if args.type and recording_indicator_active:
+                try:
+                    import keyboard
+                    for _ in range(len(chars[0])):
+                        keyboard.send('backspace')
+                    keyboard.write(f"{chars[i % len(chars)]}")
+                except Exception:
+                    pass
+
         print("\r" + " " * 80 + "\r", end="", file=sys.stderr, flush=True)
         
         if args.type:
-            nonlocal ui_cleanup_in_progress
-            ui_cleanup_in_progress = True
-            for _ in range(len(base_msg) + 1):
-                kbd.press(Key.backspace)
-                kbd.release(Key.backspace)
-            ui_cleanup_in_progress = False
+            try:
+                import keyboard
+                for _ in range(len(chars[0])):
+                    keyboard.send('backspace')
+            except Exception:
+                pass
 
     def transcribing_animation():
-        chars = ['[|]', '[/]', '[--]', '[\]', '[|]', '[#]']
+        # Smooth clockwise rotation
+        chars = ['◓', '◑', '◒', '◐']
+        console_msg = "📝 PROCESANDO"
         i = 0
-        base_msg = "Procesando "
+
         if args.type:
-            from pynput.keyboard import Controller, Key
-            kbd = Controller()
-            kbd.type(base_msg)
-            kbd.type(chars[i])
+            try:
+                import keyboard
+                keyboard.write(f"{chars[i]}")
+            except Exception:
+                pass
 
         while transcribing_indicator_active:
-            print(f"\r[pipevoice] {chars[i]} Transcribiendo...", end="", file=sys.stderr, flush=True)
-            
-            if args.type:
-                for _ in range(len(chars[0])):
-                    kbd.press(Key.backspace)
-                    kbd.release(Key.backspace)
-                next_char = chars[(i + 1) % len(chars)]
-                kbd.type(next_char)
-                
-            i = (i + 1) % len(chars)
+            print(f"\r[pipevoice] {console_msg} {chars[i % len(chars)]}...", end="", file=sys.stderr, flush=True)
             time.sleep(0.15)
-            
+            i += 1
+            if args.type and transcribing_indicator_active:
+                try:
+                    import keyboard
+                    for _ in range(len(chars[0])):
+                        keyboard.send('backspace')
+                    keyboard.write(f"{chars[i % len(chars)]}")
+                except Exception:
+                    pass
+
         print("\r" + " " * 80 + "\r", end="", file=sys.stderr, flush=True)
-        
+
         if args.type:
-            nonlocal ui_cleanup_in_progress
-            ui_cleanup_in_progress = True
-            for _ in range(len(base_msg) + len(chars[0])):
-                kbd.press(Key.backspace)
-                kbd.release(Key.backspace)
-            ui_cleanup_in_progress = False
+            try:
+                import keyboard
+                for _ in range(len(chars[0])):
+                    keyboard.send('backspace')
+            except Exception:
+                pass
 
     def on_key_press(key):
         """Start recording when trigger key is pressed."""
-        nonlocal recording_indicator_active, is_actively_recording
+        nonlocal recording_indicator_active, is_actively_recording, anim_thread
         
         if transcribing_indicator_active or is_transcribing or is_actively_recording or ui_cleanup_in_progress:
             return  # Ignore rapid spamming while busy
 
         is_actively_recording = True
         recording_indicator_active = True
-        threading.Thread(target=recording_animation, daemon=True).start()
+        anim_thread = threading.Thread(target=recording_animation, daemon=True)
+        anim_thread.start()
         recorder.record()
 
     def on_key_release(key):
         """Stop recording and transcribe when trigger key is released."""
-        nonlocal recording_indicator_active, is_actively_recording
+        nonlocal recording_indicator_active, is_actively_recording, anim_thread
         
         if not is_actively_recording:
             return
             
         is_actively_recording = False
         recording_indicator_active = False
+        if anim_thread:
+            anim_thread.join()
+            anim_thread = None
+            
         # Stop stream first so no more chunks are added, then read the buffer.
         recorder.stop()
         audio = recorder.get_audio()
@@ -286,14 +297,18 @@ def main():
         # Run transcription in a daemon thread so the keyboard listener
         # is never blocked and the spacebar stays responsive.
         def _transcribe():
-            nonlocal transcribing_indicator_active, is_transcribing
+            nonlocal transcribing_indicator_active, is_transcribing, anim_thread
             is_transcribing = True
             transcribing_indicator_active = True
-            threading.Thread(target=transcribing_animation, daemon=True).start()
+            anim_thread = threading.Thread(target=transcribing_animation, daemon=True)
+            anim_thread.start()
             
             text = transcriber.transcribe(audio, language=args.language)
             
             transcribing_indicator_active = False
+            if anim_thread:
+                anim_thread.join()
+                anim_thread = None
             
             if text:
                 # Output ONLY to stdout - this is what gets piped
@@ -303,8 +318,11 @@ def main():
                 
                 # If virtual keyboard mode is on, type the text into the active window
                 if args.type:
-                    from pynput.keyboard import Controller
-                    Controller().type(text + " ")
+                    try:
+                        import keyboard
+                        keyboard.write(text + " ")
+                    except Exception as e:
+                        print(f"[pipevoice] Keyboard type failed: {e}", file=sys.stderr)
             else:
                 print("[pipevoice] No speech detected.", file=sys.stderr)
                 

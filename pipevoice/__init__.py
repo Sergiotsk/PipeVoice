@@ -13,4 +13,4 @@ from pipevoice.push_to_talk import PushToTalk
 from pipevoice.recorder import AudioRecorder
 from pipevoice.transcriber import Transcriber
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"

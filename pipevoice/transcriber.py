@@ -90,6 +90,33 @@ class Transcriber:
             self._load_model()
         return self._model
 
+    def _is_hallucination(self, text: str) -> bool:
+        """Check if the transcribed text is likely a Whisper hallucination."""
+        if not text:
+            return False
+            
+        import string
+        clean_text = text.lower().strip(string.punctuation + " ")
+        
+        # 1. Known common short hallucinations for silence
+        hallucinations = [
+            "amén", "gracias", "thank you", "subtítulos", 
+            "amara.org", "silencio", "traducción", "suscríbete",
+            "お疲れ様", "お疲れ様でした", "ご視聴ありがとうございました"
+        ]
+        
+        if len(clean_text) < 30 and any(h in clean_text for h in hallucinations):
+            return True
+            
+        # 2. Repetitive character looping (e.g. "සිසිසිසිසි", "වවවවව")
+        if len(text) > 15:
+            unique_chars = len(set(text.replace(" ", "")))
+            # If a long string is made of very few unique characters, it's a loop glitch
+            if unique_chars < 5:
+                return True
+                
+        return False
+
     def transcribe(self, audio: np.ndarray, language=None):
         """Transcribe audio data to text.
 
@@ -118,7 +145,13 @@ class Transcriber:
 
         try:
             result = self.model.transcribe(audio, **options)
-            return result["text"].strip()
+            text = result["text"].strip()
+            
+            if self._is_hallucination(text):
+                print(f"[transcriber] Ignored hallucination: '{text}'", file=sys.stderr)
+                return ""
+                
+            return text
         except Exception as e:
             print(f"[transcriber] Error: {e}", file=sys.stderr)
             raise RuntimeError(f"Transcription failed: {e}") from e

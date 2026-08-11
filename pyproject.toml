@@ -20,3 +20,7 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 no-build-isolation-package = ["openai-whisper"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
