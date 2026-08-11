@@ -19,22 +19,25 @@
 
 ### Installation
 
+Requires [uv](https://docs.astral.sh/uv/).
+
 ```bash
-# Clone the repository
+# Install globally as a CLI command — no clone needed
+uv tool install git+https://github.com/Sergiotsk/PipeVoice.git
+
+# pipevoice is now on your PATH
+pipevoice --help
+```
+
+For local development:
+
+```bash
 git clone https://github.com/Sergiotsk/PipeVoice.git
-cd pipevoice
+cd PipeVoice
+uv sync --extra dev   # installs pytest too
 
-# Create a virtual environment
-python -m venv venv
-
-# Activate it
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+uv run pipevoice      # run from source
+uv run pytest         # run the test suite
 ```
 
 ### Basic Usage
