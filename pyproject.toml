@@ -3,6 +3,7 @@ name = "pipevoice"
 version = "1.0.0"
 description = "Push-to-talk voice transcription CLI — hold F9, pipe to anything"
 requires-python = ">=3.10"
+license = "MIT"
 dependencies = [
     "openai-whisper==20231117",
     "torch>=2.0.0",

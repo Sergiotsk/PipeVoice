@@ -36,3 +36,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Metodología de trabajo personal (SDD + backlog interno) — no es documentación
+# pública del proyecto, queda solo en local. Ver docs/10-aprendizaje/ para lo
+# que sí se comparte.
+openspec/
+.atl/
+docs/02-arquitectura/
+docs/06-operaciones/
+docs/10-aprendizaje/

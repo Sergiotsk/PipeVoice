@@ -147,35 +147,19 @@ pipevoice | tee -a history.txt | opencode
 
 ```
 PipeVoice/
-├── pipevoice/                # Package
-│   ├── __init__.py           # Package init
-│   ├── main.py               # CLI entry point
-│   ├── recorder.py           # Microphone recording (sounddevice)
-│   ├── transcriber.py        # Speech-to-text (Whisper)
-│   ├── audio_processor.py    # Audio preprocessing
-│   └── push_to_talk.py       # Keyboard listener (pynput)
-├── docs/
-│   ├── 01-audio-capture.md   # Audio digital concepts & sounddevice
-│   ├── 02-keyboard-hooks.md  # Keyboard hooks & pynput
-│   ├── 03-whisper-local.md   # Whisper models & local inference
-│   ├── 04-numpy-audio.md     # NumPy for audio processing
-│   └── 05-cli-pipe-pattern.md # Unix pipes & CLI best practices
+├── pipevoice/                 # Package
+│   ├── __init__.py            # Package init
+│   ├── main.py                # CLI entry point
+│   ├── recorder.py            # Microphone recording (sounddevice)
+│   ├── transcriber.py         # Speech-to-text (Whisper)
+│   ├── audio_processor.py     # Audio preprocessing
+│   └── push_to_talk.py        # Keyboard listener (pynput)
 ├── examples/
-│   └── usage-examples.sh     # Practical pipe examples
-├── requirements.txt
+│   └── usage-examples.sh      # Practical pipe examples
+├── pyproject.toml
 ├── .gitignore
 └── README.md
 ```
-
-## Documentation
-
-Each document in `docs/` is written in a teaching style — like a programming professor explaining concepts to a student, with specific details, specifications, examples, and professional tips.
-
-- [01 - Audio Capture](docs/01-audio-capture.md) — Digital audio, sample rate, sounddevice, PortAudio
-- [02 - Keyboard Hooks](docs/02-keyboard-hooks.md) — pynput, event listeners, cross-platform input
-- [03 - Whisper Local](docs/03-whisper-local.md) — openai-whisper, models, CPU optimization
-- [04 - NumPy Audio](docs/04-numpy-audio.md) — NumPy arrays for audio processing
-- [05 - CLI Pipe Pattern](docs/05-cli-pipe-pattern.md) — Unix pipes, stdin/stdout, CLI best practices
 
 ## Platform Notes
 
