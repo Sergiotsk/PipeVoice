@@ -6,6 +6,7 @@ Uses PortAudio backend via sounddevice for cross-platform compatibility.
 """
 
 import sys
+from typing import cast
 
 import numpy as np
 import sounddevice as sd
@@ -53,9 +54,13 @@ class AudioRecorder:
         Returns:
             List of dicts with device info (name, max_input_channels, etc.)
         """
+        # sounddevice no distribuye type stubs — query_devices() devuelve
+        # objetos tipo dict en runtime, pero pyright no lo sabe (ver
+        # docs/10-aprendizaje/07-type-checking-pyright.md).
         devices = sd.query_devices()
         input_devices = []
         for i, dev in enumerate(devices):
+            dev = cast(dict, dev)
             if dev["max_input_channels"] > 0:
                 input_devices.append(
                     {

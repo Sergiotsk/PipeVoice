@@ -19,6 +19,7 @@ pipevoice = "pipevoice.main:main"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pyright>=1.1.380",
 ]
 
 [build-system]

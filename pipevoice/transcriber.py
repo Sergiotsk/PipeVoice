@@ -10,6 +10,7 @@ key or internet connection required after initial model download.
 """
 
 import sys
+from typing import cast
 
 import numpy as np
 import torch
@@ -88,6 +89,10 @@ class Transcriber:
         """
         if self._model is None:
             self._load_model()
+        # _load_model() siempre asigna self._model — pyright no puede ver
+        # esa garantía a través de la llamada a función, por eso el assert
+        # (ver docs/10-aprendizaje/07-type-checking-pyright.md).
+        assert self._model is not None
         return self._model
 
     def _is_hallucination(self, text: str) -> bool:
@@ -144,8 +149,12 @@ class Transcriber:
             options["language"] = language
 
         try:
+            # openai-whisper no distribuye type stubs: transcribe() devuelve
+            # un dict cuyo tipo real pyright no puede inferir con precisión
+            # (ver docs/10-aprendizaje/07-type-checking-pyright.md). "text"
+            # es siempre str en tiempo de ejecución, según la doc de whisper.
             result = self.model.transcribe(audio, **options)
-            text = result["text"].strip()
+            text = cast(str, result["text"]).strip()
             
             if self._is_hallucination(text):
                 print(f"[transcriber] Ignored hallucination: '{text}'", file=sys.stderr)
